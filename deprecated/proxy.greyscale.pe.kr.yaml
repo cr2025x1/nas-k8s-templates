@@ -1,0 +1,88 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-http
+  labels:
+    app: proxy.greyscale.pe.kr
+spec:
+  ports:
+    - port: 80
+      nodePort: 32080
+  selector:
+    app: proxy.greyscale.pe.kr
+    tier: frontend
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-https
+  labels:
+    app: proxy.greyscale.pe.kr
+spec:
+  ports:
+    - port: 443
+      nodePort: 32443
+  selector:
+    app: proxy.greyscale.pe.kr
+    tier: frontend
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-stats
+  labels:
+    app: proxy.greyscale.pe.kr
+spec:
+  ports:
+    - port: 2200
+      nodePort: 32081
+  selector:
+    app: proxy.greyscale.pe.kr
+    tier: frontend
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: frontend-proxy
+  labels:
+    app: proxy.greyscale.pe.kr
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: proxy.greyscale.pe.kr
+        tier: frontend
+    spec:
+      containers:
+        - image: haproxy
+          name: frontend-haproxy
+          ports:
+          - containerPort: 80
+            name: haproxy-http
+            protocol: TCP
+          - containerPort: 443
+            name: haproxy-https
+            protocol: TCP
+          - containerPort: 2200
+            name: haproxy-stats
+            protocol: TCP
+          volumeMounts:
+          - name: frontend-haproxy-vol
+            mountPath: /usr/local/etc/haproxy
+          - name: certs-vol
+            mountPath: /usr/local/etc/certs-vol
+      volumes:
+        - name: frontend-haproxy-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/proxy.greyscale.pe.kr/haproxy"
+        - name: certs-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/commons/certs"

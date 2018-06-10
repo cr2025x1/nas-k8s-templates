@@ -1,0 +1,222 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-db
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: db
+    version: "20180607"
+spec:
+  ports:
+    - port: 3306
+      name: mariadb
+  selector:
+    app: blog.greyscale.pe.kr
+    tier: db
+  clusterIP: None
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: blog-mariadb
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: db
+    version: "20180607"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: blog.greyscale.pe.kr
+        tier: db
+        version: "20180607"
+      annotations:
+        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+    spec:
+      containers:
+        - image: mariadb
+          name: blog-mariadb
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: blog-db-pass
+                  key: password
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: blog-db-vol
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: blog-db-vol
+          persistentVolumeClaim:
+            claimName: blog-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: blog-db-pv
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: db
+    version: "20180607"
+spec:
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteOnce
+  iscsi:
+    targetPortal: 192.168.10.3:3260
+    iqn: iqn.1987-17.kr.pe.greyscale.nas:container-blog-db
+    lun: 3
+    fsType: 'ext4'
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blog-db-pvc
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: db
+    version: "20180607"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+  selector:
+    matchLabels:
+      app: blog.greyscale.pe.kr
+      tier: db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-frontend
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: frontend
+    version: "20180607"
+spec:
+  ports:
+    - port: 80
+      nodePort: 31000
+      name: http
+  selector:
+    app: blog.greyscale.pe.kr
+    tier: frontend
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: blog-nginx
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: frontend
+    version: "20180607"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: blog.greyscale.pe.kr
+        tier: frontend
+        version: "20180607"
+      annotations:
+        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+    spec:
+      containers:
+        - image: nginx:alpine
+          name: blog-nginx
+          env:
+          ports:
+            - containerPort: 80
+              name: nginx
+          volumeMounts:
+            - name: blog-wordpress-vol
+              mountPath: /var/www/html
+            - name: blog-nginx-vol
+              mountPath: /etc/nginx/conf.d
+            - name: blog-nginx-log-vol
+              mountPath: /var/log/nginx
+      volumes:
+        - name: blog-wordpress-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/wordpress"
+        - name: blog-nginx-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/nginx"
+        - name: blog-nginx-log-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/nginx-log"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-webapp
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: webapp
+    version: "20180607"
+spec:
+  ports:
+    - port: 9000
+      name: php-fpm
+  selector:
+    app: blog.greyscale.pe.kr
+    tier: webapp
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: blog-wordpress
+  labels:
+    app: blog.greyscale.pe.kr
+    tier: webapp
+    version: "20180607"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: blog.greyscale.pe.kr
+        tier: webapp
+        version: "20180607"
+      annotations:
+        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+    spec:
+      containers:
+        - image: wordpress:fpm-alpine
+          name: blog-wordpress
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: blog-db
+            - name: WORDPRESS_DB_USER
+              value: wordpress
+            - name: WORDPRESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: blog-db-pass
+                  key: password
+          ports:
+            - containerPort: 9000
+              name: php-fpm
+          volumeMounts:
+            - name: blog-wordpress-vol
+              mountPath: /var/www/html
+      volumes:
+        - name: blog-wordpress-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/wordpress"

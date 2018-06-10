@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-db
+  labels:
+    app: blog.greyscale.pe.kr
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: blog.greyscale.pe.kr
+    tier: db
+  clusterIP: None
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: blog-mariadb
+  labels:
+    app: blog.greyscale.pe.kr
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: blog.greyscale.pe.kr
+        tier: db
+    spec:
+      containers:
+        - image: mariadb
+          name: blog-mariadb
+          env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: blog-db-pass
+                key: password
+          ports:
+          - containerPort: 3306
+            name: mysql
+          volumeMounts:
+          - name: blog-db-vol
+            mountPath: /var/lib/mysql
+      volumes:
+      - name: blog-db-vol
+        persistentVolumeClaim:
+          claimName: blog-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: blog-db-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  iscsi:
+    targetPortal: 192.168.10.3:3260
+    iqn: iqn.1987-17.kr.pe.greyscale.nas:container-blog-db
+    lun: 3
+    fsType: 'ext4'
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blog-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-frontend
+  labels:
+    app: blog.greyscale.pe.kr
+spec:
+  ports:
+    - port: 80
+      nodePort: 31000
+  selector:
+    app: blog.greyscale.pe.kr
+    tier: frontend
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: blog-wordpress
+  labels:
+    app: blog.greyscale.pe.kr
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: blog.greyscale.pe.kr
+        tier: frontend
+    spec:
+      containers:
+        - image: wordpress
+          name: blog-wordpress
+          env:
+          - name: WORDPRESS_DB_HOST
+            value: blog-db
+          - name: WORDPRESS_DB_USER
+            value: wordpress
+          - name: WORDPRESS_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: blog-db-pass
+                key: password
+          ports:
+          - containerPort: 80
+            name: wordpress
+          volumeMounts:
+          - name: blog-wordpress-vol
+            mountPath: /var/www/html
+      volumes:
+        - name: blog-wordpress-vol
+          nfs:          
+            server: 192.168.10.3
+            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/wordpress"            
