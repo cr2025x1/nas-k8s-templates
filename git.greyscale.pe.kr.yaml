@@ -35,7 +35,7 @@ spec:
         tier: monolithic
         version: "20180609"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: sdorra/scm-manager:latest
@@ -49,7 +49,7 @@ spec:
       volumes:
         - name: repositories
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/vcs"
+            server: a.b.c.d
+            path: "path_for_mount"
 ---
 

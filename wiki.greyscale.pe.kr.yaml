@@ -33,7 +33,7 @@ spec:
         tier: db
         version: "20180610"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: postgres:alpine
@@ -57,8 +57,8 @@ spec:
       volumes:
         - name: data
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/wiki.greyscale.pe.kr/postgresql" 
+            server: a.b.c.d
+            path: "path_for_mount" 
 ---
 apiVersion: v1
 kind: Service
@@ -95,7 +95,7 @@ spec:
         tier: cache-db
         version: "20180610"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: memcached:alpine
@@ -140,7 +140,7 @@ spec:
         tier: frontend
         version: "20180610"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: nginx:alpine
@@ -159,16 +159,16 @@ spec:
       volumes:
         - name: htdocs
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/wiki.greyscale.pe.kr/mediawiki"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: conf
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/wiki.greyscale.pe.kr/nginx-conf"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: log
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/wiki.greyscale.pe.kr/nginx-log"
+            server: a.b.c.d
+            path: "path_for_mount"
 ---
 apiVersion: v1
 kind: Service
@@ -204,7 +204,7 @@ spec:
         tier: webapp
         version: "20180610"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: mediawiki:alpine-fpm-custom
@@ -219,6 +219,6 @@ spec:
       volumes:
         - name: htdocs
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/wiki.greyscale.pe.kr/mediawiki" 
+            server: a.b.c.d
+            path: "path_for_mount" 
 ---

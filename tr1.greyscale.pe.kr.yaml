@@ -42,7 +42,7 @@ spec:
         tier: monolithic
         version: "20180608"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.1.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: linuxserver/transmission
@@ -69,14 +69,14 @@ spec:
       volumes:
         - name: config
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/tr1.greyscale.pe.kr/config"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: downloads
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/torrents"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: watch
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/tr1.greyscale.pe.kr/watch"
+            server: a.b.c.d
+            path: "path_for_mount"
 ---

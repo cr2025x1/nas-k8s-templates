@@ -57,8 +57,8 @@ spec:
   accessModes:
     - ReadWriteOnce
   iscsi:
-    targetPortal: a.b.c.d:3260
-    iqn: iqn.target_name_to_mount:container-blog-db
+    targetPortal: 192.168.10.3:3260
+    iqn: iqn.1987-17.kr.pe.greyscale.nas:container-blog-db
     lun: 3
     fsType: 'ext4'
     readOnly: false
@@ -126,5 +126,5 @@ spec:
       volumes:
         - name: blog-wordpress-vol
           nfs:          
-            server: a.b.c.d
+            server: 192.168.10.3
             path: "path_for_mount"            

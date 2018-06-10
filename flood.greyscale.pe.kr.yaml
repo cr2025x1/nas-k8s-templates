@@ -42,7 +42,7 @@ spec:
         tier: monolithic
         version: "20180609"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.1.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: wonderfall/rtorrent-flood
@@ -80,11 +80,11 @@ spec:
       volumes:
         - name: flood-db
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/flood.greyscale.pe.kr/flood-db"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: data
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/torrents"
+            server: a.b.c.d
+            path: "path_for_mount"
 ---
 

@@ -64,7 +64,7 @@ spec:
         tier: monolithic
         version: "20180608"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: plexinc/pms-docker:plexpass
@@ -79,14 +79,14 @@ spec:
           - name: TZ
             value: "KR"
           - name: ALLOWED_NETWORKS
-            value: "192.168.10.0/24,192.168.55.0/24"
+            value: "a.b.c.d/24,a.b.c.d/24"
           - name: PLEX_CLAIM 
             valueFrom:
               secretKeyRef:
                 name: media-stream-claim
                 key: token
           - name: ADVERTISE_IP
-            value: "http://192.168.10.140:32400"
+            value: "http://a.b.c.d:32400"
           ports:
           - containerPort: 32400
             name: access
@@ -123,17 +123,17 @@ spec:
       volumes:
         - name: config
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/plex.greyscale.pe.kr/config"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: transcode
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/plex.greyscale.pe.kr/transcode"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: data
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/musics-stream"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: certs
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/commons/certs"
+            server: a.b.c.d
+            path: "path_for_mount"

@@ -33,7 +33,7 @@ spec:
         tier: db
         version: "20180607"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: mariadb
@@ -69,8 +69,8 @@ spec:
   accessModes:
     - ReadWriteOnce
   iscsi:
-    targetPortal: 192.168.10.3:3260
-    iqn: iqn.1987-17.kr.pe.greyscale.nas:container-blog-db
+    targetPortal: a.b.c.d:3260
+    iqn: iqn.target_name_to_mount:container-blog-db
     lun: 3
     fsType: 'ext4'
     readOnly: false
@@ -130,7 +130,7 @@ spec:
         tier: frontend
         version: "20180607"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: nginx:alpine
@@ -149,16 +149,16 @@ spec:
       volumes:
         - name: blog-wordpress-vol
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/wordpress"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: blog-nginx-vol
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/nginx"
+            server: a.b.c.d
+            path: "path_for_mount"
         - name: blog-nginx-log-vol
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/nginx-log"
+            server: a.b.c.d
+            path: "path_for_mount"
 ---
 apiVersion: v1
 kind: Service
@@ -194,7 +194,7 @@ spec:
         tier: webapp
         version: "20180607"
       annotations:
-        "cni.projectcalico.org/ipv4pools": "[\"10.55.2.0/24\"]"
+        "cni.projectcalico.org/ipv4pools": "[\"a.b.c.d/24\"]"
     spec:
       containers:
         - image: wordpress:fpm-alpine
@@ -218,5 +218,5 @@ spec:
       volumes:
         - name: blog-wordpress-vol
           nfs:          
-            server: 192.168.10.3
-            path: "/mnt/bay_array/container-persistents/blog.greyscale.pe.kr/wordpress"
+            server: a.b.c.d
+            path: "path_for_mount"

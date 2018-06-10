@@ -13,7 +13,7 @@ metadata:
   namespace: kube-system
 data:
   # The location of your etcd cluster.  This uses the Service clusterIP defined below.
-  etcd_endpoints: "http://10.96.232.136:6666"
+  etcd_endpoints: "http://a.b.c.d:6666"
 
   # Configure the Calico backend to use.
   calico_backend: "bird"
@@ -101,8 +101,8 @@ spec:
           - --name=calico
           - --data-dir=/var/etcd/calico-data
           - --advertise-client-urls=http://$CALICO_ETCD_IP:6666
-          - --listen-client-urls=http://0.0.0.0:6666
-          - --listen-peer-urls=http://0.0.0.0:6667
+          - --listen-client-urls=http://a.b.c.d:6666
+          - --listen-peer-urls=http://a.b.c.d:6667
           - --auto-compaction-retention=1
           volumeMounts:
             - name: var-etcd
@@ -129,7 +129,7 @@ spec:
     k8s-app: calico-etcd
   # This ClusterIP needs to be known in advance, since we cannot rely
   # on DNS to get access to etcd.
-  clusterIP: 10.96.232.136
+  clusterIP: a.b.c.d
   ports:
     - port: 6666
 ---
@@ -213,7 +213,7 @@ spec:
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within `--cluster-cidr`.
             - name: CALICO_IPV4POOL_CIDR
-              value: "10.55.0.0/24"
+              value: "a.b.c.d/24"
             - name: CALICO_IPV4POOL_IPIP
               value: "CrossSubnet"
             - name: CALICO_IPV4POOL_NAT_OUTGOING

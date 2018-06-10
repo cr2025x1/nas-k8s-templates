@@ -80,9 +80,9 @@ spec:
       volumes:
         - name: frontend-haproxy-vol
           nfs:          
-            server: a.b.c.d
+            server: 192.168.10.3
             path: "path_for_mount"
         - name: certs-vol
           nfs:          
-            server: a.b.c.d
+            server: 192.168.10.3
             path: "path_for_mount"
