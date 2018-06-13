@@ -1,0 +1,94 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: torrent-flood
+  labels:
+    app: {{ services.flood.domain_name }}
+    tier: monolithic
+    version: "20180611"
+spec:
+  type: NodePort
+  ports:
+  - port: 3000
+    nodePort: {{ services.flood.webgui_nodeport }}
+    name: webgui
+  - port: 49184
+    nodePort: {{ services.flood.p2p_nodeport }}
+    name: p2p-tcp
+  - port: 49184
+    nodePort: {{ services.flood.p2p_nodeport }}
+    protocol: UDP
+    name: p2p-udp
+  selector:
+    app: {{ services.flood.domain_name }}
+    tier: monolithic
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: torrent-flood
+  labels:
+    app: {{ services.flood.domain_name }}
+    tier: monolithic
+    version: "20180611"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ services.flood.domain_name }}
+        tier: monolithic
+        version: "20180611"
+      annotations:
+{% for item in services.flood.pod_annotations %}
+        {{ item }}
+{% endfor %}
+    spec:
+      containers:
+      - image: wonderfall/rtorrent-flood
+        name: rtorrent-flood
+        tty: true
+        env:
+        - name: UID
+          value: "{{ services.flood.puid }}"
+        - name: GID
+          value: "{{ services.flood.pgid }}"
+        - name: FLOOD_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: flood-secret
+              key: password
+        - name: CONTEXT_PATH
+          value: "/"
+        - name: RTORRENT_SCGI
+          value: "0"
+        - name: PKG_CONFIG_PATH
+          value: "/usr/local/lib/pkgconfig"
+        ports:
+        - containerPort: 3000
+          name: webgui
+        - containerPort: 49184
+          name: p2p-tcp
+        - containerPort: 49184
+          protocol: UDP
+          name: p2p-udp
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: flood-db
+          mountPath: /flood-db
+      volumes:
+      - name: flood-db
+{{ services.flood.db_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}
+      - name: data
+{{ services.flood.data_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}
+---
+apiVersion: v1
+data:
+  password: {{ services.flood.secrets.secret | b64encode }}
+kind: Secret
+metadata:
+  name: flood-secret
+type: Opaque

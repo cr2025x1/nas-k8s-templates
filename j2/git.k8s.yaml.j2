@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vcs-webgui
+  labels:
+    app: {{ services.vcs.domain_name }}
+    tier: monolithic
+    version: "20180611"
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    nodePort: {{ services.vcs.webgui_nodeport }}
+    name: vcs-webgui
+  selector:
+    app: {{ services.vcs.domain_name }}
+    tier: monolithic
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vcs-scm-manager
+  labels:
+    app: {{ services.vcs.domain_name }}
+    tier: monolithic
+    version: "20180611"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ services.vcs.domain_name }}
+        tier: monolithic
+        version: "20180611"
+      annotations:
+{% for item in services.vcs.pod_annotations %}
+        {{ item }}
+{% endfor %}
+    spec:
+      containers:
+      - image: sdorra/scm-manager
+        name: scm-manager
+        ports:
+        - containerPort: 8080
+          name: vcs-webgui
+        volumeMounts:
+        - name: repositories
+          mountPath: /var/lib/scm
+      volumes:
+      - name: repositories
+{{ services.vcs.repositories_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}

@@ -1,0 +1,141 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-stream
+  labels:
+    app: {{ services.plex.domain_name }}
+    tier: monolithic
+    version: "20180608"
+spec:
+  type: NodePort
+  ports:
+  - port: 32400
+    nodePort: {{ services.plex.webgui_nodeport }}
+    name: webgui
+  - port: 3005
+    nodePort: {{ services.plex.home_theater_nodeport }}
+    name: home-theater
+  - port: 8324
+    nodePort: {{ services.plex.roku_nodeport }}
+    name: roku
+  - port: 32469
+    nodePort: {{ services.plex.dlna_tcp_nodeport }}
+    name: dlna-tcp
+  - port: 1900
+    nodePort: {{ services.plex.dlna_udp_nodeport }}
+    protocol: UDP
+    name: dlna-udp
+  - port: 32410
+    nodePort: {{ services.plex.gdm_net_1_nodeport }}
+    name: gdm-net-1
+    protocol: UDP
+  - port: 32412
+    nodePort: {{ services.plex.gdm_net_2_nodeport }}
+    name: gdm-net-2
+    protocol: UDP
+  - port: 32413
+    nodePort: {{ services.plex.gdm_net_3_nodeport }}
+    name: gdm-net-3
+    protocol: UDP
+  - port: 32414
+    nodePort: {{ services.plex.gdm_net_4_nodeport }}
+    name: gdm-net-4
+    protocol: UDP
+  selector:
+    app: {{ services.plex.domain_name }}
+    tier: monolithic
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: stream-plex
+  labels:
+    app: {{ services.plex.domain_name }}
+    tier: monolithic
+    version: "20180608"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ services.plex.domain_name }}
+        tier: monolithic
+        version: "20180608"
+      annotations:
+{% for item in services.cloud.pod_annotations %}
+        {{ item }}
+{% endfor %}
+    spec:
+      containers:
+      - image: plexinc/pms-docker:plexpass
+        name: plexmediaserver-plexpass
+        env:
+        - name: PLEX_UID
+          value: "0"
+        - name: PLEX_GID
+          value: "0"
+        - name: CHANGE_CONFIG_DIR_OWNERSHIP
+          value: "false"
+        - name: TZ
+          value: {{ services.plex.timezone }}
+        - name: ALLOWED_NETWORKS
+          value: {{ services.plex.plex_allowed_networks }}
+        - name: PLEX_CLAIM 
+          valueFrom:
+            secretKeyRef:
+              name: media-stream-claim
+              key: token
+        - name: ADVERTISE_IP
+          value: {{ services.plex.plex_advertise_ip }}
+        ports:
+        - containerPort: 32400
+          name: access
+        - containerPort: 3005
+          name: home-theater
+        - containerPort: 8324
+          name: roku
+        - containerPort: 32469
+          name: dlna-tcp
+        - containerPort: 1900
+          protocol: UDP
+          name: dlna-udp
+        - containerPort: 32410
+          name: gdm-net-1
+          protocol: UDP
+        - containerPort: 32412
+          name: gdm-net-2
+          protocol: UDP
+        - containerPort: 32413
+          name: gdm-net-3
+          protocol: UDP
+        - containerPort: 32414
+          name: gdm-net-4
+          protocol: UDP          
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: transcode
+          mountPath: /transcode
+        - name: data
+          mountPath: /data
+        - name: certs
+          mountPath: /usr/local/etc/certs-vol
+      volumes:
+      - name: config
+{{ services.plex.config_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}
+      - name: transcode
+{{ services.plex.transcode_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}        
+      - name: data
+{{ services.plex.data_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}        
+      - name: certs
+{{ services.plex.certs_volume | to_nice_yaml(indent=2, explicit_start=False, explicit_end=False) | indent(width=8, indentfirst=True) }}        
+---
+apiVersion: v1
+data:
+  password: {{ services.plex.secrets.plex_token | b64encode }}
+kind: Secret
+metadata:
+  name: media-stream-claim
+type: Opaque
